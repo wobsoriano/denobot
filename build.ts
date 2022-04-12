@@ -23,13 +23,21 @@ function flags() {
 const folder = ".cache"
 const name = "robotgo"
 
+console.log("build c-shared started...")
+
 const cmd = Deno.run({
   cmd: ["go", "build", "-a", ...flags(), "-o", `${folder}/${name}${extension()}`, "-buildmode=c-shared", "robotgo.go"],
-  stdout: "piped"
+  "stderr": "piped"
 })
 
-const stdout = await cmd.output();
+const status = await cmd.status()
 
-const decoded = new TextDecoder().decode(stdout);
+if (status.success) {
+  console.log("build succeeded")
+} else {
+  const stderr = await cmd.stderrOutput()
+  const decoded = new TextDecoder().decode(stderr);
+  console.log(decoded)
+}
 
-console.log(decoded)
+
