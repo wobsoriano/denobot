@@ -65,6 +65,16 @@ func toStr(arr interface{}) string {
 	return strings.Trim(fmt.Sprint(arr), "[]")
 }
 
+func toCoordinates(x, y int) *C.Coordinates {
+	// malloc a new Coordinates struct and set contents
+	coords := (*C.Coordinates)(C.malloc(C.size_t(unsafe.Sizeof(C.Coordinates{}))))
+
+	coords.x = (C.int)(x)
+	coords.y = (C.int)(y)
+
+	return coords
+}
+
 //export FreeString
 func FreeString(str *C.char) {
 	C.free(unsafe.Pointer(str))
@@ -87,8 +97,8 @@ func MilliSleep(tm int) {
 }
 
 //export MSleep
-func MSleep(tm float64) {
-	robotgo.MicroSleep(tm)
+func MSleep(tm int) {
+	robotgo.MilliSleep(tm)
 }
 
 /*
@@ -114,28 +124,12 @@ func GetMouseColor() *C.char {
 
 //export GetScreenSize
 func GetScreenSize() *C.Coordinates {
-	x, y := robotgo.GetScreenSize()
-
-	// malloc a new Point struct and set contents
-	points := (*C.Coordinates)(C.malloc(C.size_t(unsafe.Sizeof(C.Coordinates{}))))
-
-	points.x = (C.int)(x)
-	points.y = (C.int)(y)
-
-	return points
+	return toCoordinates(robotgo.GetScreenSize())
 }
 
 //export GetScaleSize
 func GetScaleSize() *C.Coordinates {
-	x, y := robotgo.GetScaleSize()
-
-	// malloc a new Point struct and set contents
-	points := (*C.Coordinates)(C.malloc(C.size_t(unsafe.Sizeof(C.Coordinates{}))))
-
-	points.x = (C.int)(x)
-	points.y = (C.int)(y)
-
-	return points
+	return toCoordinates(robotgo.GetScaleSize())
 }
 
 //export CaptureScreen
@@ -143,24 +137,24 @@ func CaptureScreen(x, y, w, h int) (*uint8, int, int,
 	int, uint8, uint8) {
 	var bit robotgo.Bitmap
 	if x == -1 {
-		bit = robotgo.GoCaptureScreen()
+		bit = robotgo.CaptureGo()
 	} else {
-		bit = robotgo.GoCaptureScreen(x, y, w, h)
+		bit = robotgo.CaptureGo(x, y, w, h)
 	}
 
 	return bit.ImgBuf, bit.Width, bit.Height,
 		bit.Bytewidth, bit.BitsPixel, bit.BytesPerPixel
 }
 
-//export SaveCapture
-func SaveCapture(path *C.char, x, y, w, h int) {
-	if x == -1 {
-		robotgo.SaveCapture(str(path))
-		return
-	}
+// TODO: export SaveCapture
+// func SaveCapture(path *C.char, x, y, w, h int) {
+// 	if x == -1 {
+// 		robotgo.SaveCapture(str(path))
+// 		return
+// 	}
 
-	robotgo.SaveCapture(str(path), x, y, w, h)
-}
+// 	robotgo.SaveCapture(str(path), x, y, w, h)
+// }
 
 /*
 .___  ___.   ______    __    __       _______. _______
@@ -189,15 +183,7 @@ func MoveSmooth(x, y int, low, high float64) bool {
 
 //export GetMousePos
 func GetMousePos() *C.Coordinates {
-	x, y := robotgo.GetMousePos()
-
-	// malloc a new Point struct and set contents
-	points := (*C.Coordinates)(C.malloc(C.size_t(unsafe.Sizeof(C.Coordinates{}))))
-
-	points.x = (C.int)(x)
-	points.y = (C.int)(y)
-
-	return points
+	return toCoordinates(robotgo.GetMousePos())
 }
 
 //export Click
@@ -228,20 +214,37 @@ func Scroll(x, y int) {
 //export KeyTap
 func KeyTap(key *C.char, vals *C.char) *C.char {
 	arr := strings.Split(str(vals), ",")
-	s := robotgo.KeyTap(str(key), arr)
-	return ch(s)
+	err := robotgo.KeyTap(str(key), arr)
+	if err != nil {
+		return ch(err.Error())
+	}
+
+	return ch("")
 }
 
 //export KeyToggle
-func KeyToggle(key *C.char, vals *C.char) *C.char {
-	arr := strings.Split(str(vals), ",")
-	s := robotgo.KeyToggle(str(key), arr...)
-	return ch(s)
+func KeyToggle(key *C.char, args *C.char) *C.char {
+	arr := strings.Split(str(args), ",")
+	names := make([]interface{}, len(arr))
+	for i, s := range arr {
+		names[i] = s
+	}
+	err := robotgo.KeyToggle(str(key), names...)
+	if err != nil {
+		return ch(err.Error())
+	}
+
+	return ch("")
 }
 
 //export TypeStr
-func TypeStr(c *C.char, args float64) {
+func TypeStr(c *C.char, args int) {
 	robotgo.TypeStr(str(c), args)
+}
+
+//export TypeStrDelay
+func TypeStrDelay(c *C.char, delay int) {
+	robotgo.TypeStrDelay(str(c), delay)
 }
 
 //export ReadAll
@@ -273,199 +276,8 @@ func PasteStr(text *C.char) {
 	robotgo.PasteStr(str(text))
 }
 
-/*
-.______    __  .___________..___  ___.      ___      .______
-|   _  \  |  | |           ||   \/   |     /   \     |   _  \
-|  |_)  | |  | `---|  |----`|  \  /  |    /  ^  \    |  |_)  |
-|   _  <  |  |     |  |     |  |\/|  |   /  /_\  \   |   ___/
-|  |_)  | |  |     |  |     |  |  |  |  /  _____  \  |  |
-|______/  |__|     |__|     |__|  |__| /__/     \__\ | _|
-*/
-
-func toBitmap(imgBuf *uint8, width, height, bytewidth int,
-	bitsPixel, bytesPerPixel uint8) robotgo.Bitmap {
-
-	return robotgo.Bitmap{
-		ImgBuf:        imgBuf,
-		Width:         width,
-		Height:        height,
-		Bytewidth:     bytewidth,
-		BitsPixel:     bitsPixel,
-		BytesPerPixel: bytesPerPixel,
-	}
-}
-
-//export GetText
-func GetText(path *C.char) (*C.char, *C.char) {
-	s, err := robotgo.GetText(str(path))
-	if err != nil {
-		return ch(s), ech(err)
-	}
-
-	return ch(s), ch("")
-}
-
-//export OpenBitmapArgs
-func OpenBitmapArgs(path *C.char) (*uint8, int, int, int,
-	uint8, uint8) {
-	cbit := robotgo.OpenBitmap(str(path))
-	gbit := robotgo.ToBitmap(cbit)
-
-	return gbit.ImgBuf, gbit.Width, gbit.Height, gbit.Bytewidth,
-		gbit.BitsPixel, gbit.BytesPerPixel
-}
-
-//export FreeBitmap
-func FreeBitmap(imgBuf *uint8, width, height, bytewidth int,
-	bitsPixel, bytesPerPixel uint8) {
-
-	gbit := toBitmap(imgBuf, width, height, bytewidth, bitsPixel, bytesPerPixel)
-	cbit := robotgo.ToCBitmap(gbit)
-	robotgo.FreeBitmap(cbit)
-}
-
-//export FindBitmapArgs
-func FindBitmapArgs(imgBuf *uint8, width, height, bytewidth int,
-	bitsPixel, bytesPerPixel uint8) (int, int) {
-	gbit := toBitmap(imgBuf, width, height, bytewidth, bitsPixel, bytesPerPixel)
-	cbit := robotgo.ToCBitmap(gbit)
-
-	return robotgo.FindBitmap(cbit)
-}
-
-//export SaveBitmapArgs
-func SaveBitmapArgs(path *C.char, imgBuf *uint8, width, height, bytewidth int,
-	bitsPixel, bytesPerPixel uint8) *C.char {
-
-	gbit := toBitmap(imgBuf, width, height, bytewidth, bitsPixel, bytesPerPixel)
-	cbit := robotgo.ToCBitmap(gbit)
-
-	s := robotgo.SaveBitmap(cbit, str(path))
-	return ch(s)
-}
-
-//export ToStrBitmap
-func ToStrBitmap(imgBuf *uint8, width, height, bytewidth int,
-	bitsPixel, bytesPerPixel uint8) *C.char {
-
-	gbit := toBitmap(imgBuf, width, height, bytewidth, bitsPixel, bytesPerPixel)
-	cbit := robotgo.ToCBitmap(gbit)
-	b := robotgo.TostringBitmap(cbit)
-
-	return ch(b)
-}
-
-//export BitmapFromStr
-func BitmapFromStr(bit *C.char) (*uint8, int, int, int,
-	uint8, uint8) {
-	cbit := robotgo.BitmapFromStr(str(bit))
-	gbit := robotgo.ToBitmap(cbit)
-
-	return gbit.ImgBuf, gbit.Width, gbit.Height, gbit.Bytewidth,
-		gbit.BitsPixel, gbit.BytesPerPixel
-}
-
-//export CaptureBitmapStr
-func CaptureBitmapStr(x, y, w, h int) *C.char {
-	bit := robotgo.CaptureScreen(x, y, w, h)
-	str := robotgo.TostringBitmap(bit)
-
-	return ch(str)
-}
-
-//export OpenBitmapStr
-func OpenBitmapStr(path *C.char) *C.char {
-	bit := robotgo.OpenBitmap(str(path))
-	s := robotgo.TostringBitmap(bit)
-
-	return ch(s)
-}
-
-//export SaveBitmapStr
-func SaveBitmapStr(bit, path *C.char) *C.char {
-	bitmap := robotgo.BitmapFromStr(str(bit))
-	err := robotgo.SaveBitmap(bitmap, str(path))
-
-	return ch(err)
-}
-
-//export FindBitmapStr
-func FindBitmapStr(c *C.char) (int, int) {
-	bit := robotgo.BitmapFromStr(str(c))
-	return robotgo.FindBitmap(bit)
-}
-
-//export FindPic
-func FindPic(path *C.char) (int, int) {
-	return robotgo.FindPic(str(path))
-}
-
-//export GetImgSize
-func GetImgSize(path *C.char) (int, int) {
-	return robotgo.GetImgSize(str(path))
-}
-
-//export FindColor
-func FindColor(color uint32) (int, int) {
-	x, y := robotgo.FindColor(robotgo.UintToHex(color))
-
-	return x, y
-}
-
-//export FindColorCS
-func FindColorCS(color uint32, x, y, w, h int) (int, int) {
-	fx, fy := robotgo.FindColorCS(robotgo.UintToHex(color), x, y, w, h)
-
-	return fx, fy
-}
-
-/*
- ___________    ____  _______ .__   __. .___________.
-|   ____\   \  /   / |   ____||  \ |  | |           |
-|  |__   \   \/   /  |  |__   |   \|  | `---|  |----`
-|   __|   \      /   |   __|  |  . `  |     |  |
-|  |____   \    /    |  |____ |  |\   |     |  |
-|_______|   \__/     |_______||__| \__|     |__|
-*/
-
-//export AddEvent
-func AddEvent(key *C.char) bool {
-	return robotgo.AddEvent(str(key))
-}
-
-//export StopEvent
-func StopEvent() {
-	robotgo.StopEvent()
-}
-
-//export AddEvents
-func AddEvents(key, args *C.char) bool {
-	arr := strings.Split(str(args), ",")
-	return robotgo.AddEvents(str(key), arr...)
-}
-
-//export End
-func End() {
-	robotgo.EventEnd()
-}
-
-//export AddMouse
-func AddMouse(btn *C.char, x, y int16) bool {
-	if x == -1 {
-		b := robotgo.AddMouse(str(btn))
-		return b
-	}
-
-	b := robotgo.AddMouse(str(btn), x, y)
-	return b
-}
-
-//export AddMousePos
-func AddMousePos(x, y int16) bool {
-	b := robotgo.AddMousePos(x, y)
-
-	return b
-}
+// TODO: BITMAP
+// TODO: EVENTS
 
 /*
 ____    __    ____  __  .__   __.  _______   ______   ____    __    ____
@@ -479,7 +291,7 @@ ____    __    ____  __  .__   __.  _______   ______   ____    __    ____
 
 //export ShowAlert
 func ShowAlert(title, msg *C.char) bool {
-	return robotgo.ShowAlert(str(title), str(msg))
+	return robotgo.Alert(str(title), str(msg))
 }
 
 //export GetTitle

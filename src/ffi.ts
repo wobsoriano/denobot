@@ -67,5 +67,20 @@ export const library = await plug.prepare(options, {
     name: "GetMousePos",
     parameters: [],
     result: "pointer"
+  },
+  click: {
+    name: "GetMousePos",
+    parameters: ["pointer", "u8"],
+    result: "void"
+  },
+  toggle: {
+    name: "Toggle",
+    parameters: ["pointer", "pointer"],
+    result: "void",
+  },
+  scroll: {
+    name: "Scroll",
+    parameters: ["i32", "i32"],
+    result: "void",
   }
 });

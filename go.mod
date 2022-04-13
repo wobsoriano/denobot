@@ -1,8 +1,8 @@
-module github.com/wobsoriano/deno-robotn
+module github.com/wobsoriano/denobot
 
 go 1.18
 
-require github.com/go-vgo/robotgo v0.100.10
+require github.com/go-vgo/robotgo v1.0.0-beta5.1
 
 require (
 	github.com/go-ole/go-ole v1.2.6 // indirect
@@ -10,7 +10,6 @@ require (
 	github.com/lxn/win v0.0.0-20210218163916-a377121e959e // indirect
 	github.com/otiai10/gosseract v2.2.1+incompatible // indirect
 	github.com/power-devops/perfstat v0.0.0-20220216144756-c35f1ee13d7c // indirect
-	github.com/robotn/gohook v0.40.0 // indirect
 	github.com/robotn/xgb v0.0.0-20190912153532-2cb92d044934 // indirect
 	github.com/robotn/xgbutil v0.0.0-20190912154524-c861d6f87770 // indirect
 	github.com/shirou/gopsutil/v3 v3.22.3 // indirect

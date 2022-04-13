@@ -25,6 +25,10 @@ export function toCString(ptr: Deno.UnsafePointer): string {
   return str;
 }
 
+function combineArgs(...args: string[]) {
+  return args.join(',')
+}
+
 export function getVersion() {
   return toCString(library.symbols.get_version())
 }
@@ -98,6 +102,33 @@ export function getMousePos() {
   const decoded = Coordinates.read(view, 0)
   freePointer(result)
   return decoded
+}
+
+/**
+ * Click the mouse button.
+ */
+export function click(btn = 'left', double = false) {
+  const ptr = stringToPointer(btn)
+  freePointer(ptr)
+  library.symbols.click(ptr, Number(double))
+}
+
+/**
+ * Toggles mouse button.
+ */
+export function toggle(key = "left", btn = 'down') {
+  const keyPtr = stringToPointer(key)
+  const btnPtr = stringToPointer(btn)
+  freePointer(keyPtr)
+  freePointer(btnPtr)
+  library.symbols.toggle(keyPtr, btnPtr)
+}
+
+/**
+ * Scrolls the mouse in any direction.
+ */
+export function scroll(x: number, y: number) {
+  library.symbols.scroll(x, y)
 }
 
 // const Bitmap = new byteType.Struct({
