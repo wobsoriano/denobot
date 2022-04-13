@@ -25,7 +25,7 @@ export function toCString(ptr: Deno.UnsafePointer): string {
   return str;
 }
 
-function combineArgs(...args: string[]) {
+function combineArgs(args: string[]) {
   return args.join(',')
 }
 
@@ -65,7 +65,7 @@ export function getScaleSize() {
   return decoded
 }
 
-// Mouse
+// MOUSE
 
 /**
  * Move the mouse to (x, y)
@@ -131,11 +131,44 @@ export function scroll(x: number, y: number) {
   library.symbols.scroll(x, y)
 }
 
-// const Bitmap = new byteType.Struct({
-//   imgBuf: long,
-//   width: 'long',
-//   height: 'long',
-//   bytewidth: 'long',
-//   bitsPixel: 'uint8',
-//   bytesPerPixel: 'uint8'
-// })
+// KEYBOARD
+
+/**
+ * Tap the keyboard code.
+ */
+export function keyTap(key: string, ...modifiers: string[]) {
+  const keyPtr = stringToPointer(key)
+  const modifiersPtr = stringToPointer(combineArgs(modifiers))
+  freePointer(keyPtr)
+  freePointer(modifiersPtr)
+  library.symbols.key_tap(keyPtr, modifiersPtr)
+}
+
+/**
+ * Toggle the keyboard.
+ */
+export function keyToggle(key: string, ...modifiers: string[]) {
+  const keyPtr = stringToPointer(key)
+  const modifiersPtr = stringToPointer(combineArgs(modifiers))
+  freePointer(keyPtr)
+  freePointer(modifiersPtr)
+  library.symbols.key_toggle(keyPtr, modifiersPtr)
+}
+
+/**
+ * Type a string.
+ */
+export function typeStr(text: string) {
+  const textPtr = stringToPointer(text)
+  freePointer(textPtr)
+  library.symbols.type_str(textPtr)
+}
+
+/**
+ * Type a string delayed.
+ */
+export function typeStrDelayed(text: string, delay: number) {
+  const textPtr = stringToPointer(text)
+  freePointer(textPtr)
+  library.symbols.type_str_delay(textPtr, delay)
+}

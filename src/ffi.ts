@@ -42,11 +42,6 @@ export const library = await plug.prepare(options, {
     parameters: [],
     result: "pointer",
   },
-  save_capture: {
-    name: "SaveCapture",
-    parameters: ["pointer", "i32", "i32", "i32", "i32"],
-    result: "void",
-  },
   // mouse
   move: {
     name: "Move",
@@ -82,5 +77,31 @@ export const library = await plug.prepare(options, {
     name: "Scroll",
     parameters: ["i32", "i32"],
     result: "void",
+  },
+  // keyboard
+  key_tap: {
+    name: "KeyTap",
+    parameters: ["pointer", "pointer"],
+    result: "pointer"
+  },
+  key_toggle: {
+    name: "KeyToggle",
+    parameters: ["pointer", "pointer"],
+    result: "pointer"
+  },
+  type_str: {
+    name: "TypeStr",
+    parameters: ["pointer"],
+    result: "pointer"
+  },
+  type_str_delay: {
+    name: "TypeStrDelay",
+    parameters: ["pointer", "i64"],
+    result: "pointer"
+  },
+  read_all: {
+    name: "ReadAll",
+    parameters: [],
+    result: "pointer"
   }
 });

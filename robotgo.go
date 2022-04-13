@@ -32,7 +32,8 @@ package main
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct { int x; int y; } Coordinates;
+typedef struct { int x; int y; } Point;
+typedef struct { char* result; char* error; } ResultAndError;
 typedef struct { int x; int y; } CaptureScreenReturn;
 */
 import "C"
@@ -65,14 +66,23 @@ func toStr(arr interface{}) string {
 	return strings.Trim(fmt.Sprint(arr), "[]")
 }
 
-func toCoordinates(x, y int) *C.Coordinates {
-	// malloc a new Coordinates struct and set contents
-	coords := (*C.Coordinates)(C.malloc(C.size_t(unsafe.Sizeof(C.Coordinates{}))))
+func toPoint(x, y int) *C.Point {
+	// malloc a new struct and set contents
+	coords := (*C.Point)(C.malloc(C.size_t(unsafe.Sizeof(C.Point{}))))
 
 	coords.x = (C.int)(x)
 	coords.y = (C.int)(y)
 
 	return coords
+}
+
+func toResultAndError(result string, err error) *C.ResultAndError {
+	// malloc a new struct and set contents
+	obj := (*C.ResultAndError)(C.malloc(C.size_t(unsafe.Sizeof(C.ResultAndError{}))))
+
+	obj.result = ch(result)
+	obj.error = ech(err)
+	return obj
 }
 
 //export FreeString
@@ -123,13 +133,13 @@ func GetMouseColor() *C.char {
 }
 
 //export GetScreenSize
-func GetScreenSize() *C.Coordinates {
-	return toCoordinates(robotgo.GetScreenSize())
+func GetScreenSize() *C.Point {
+	return toPoint(robotgo.GetScreenSize())
 }
 
 //export GetScaleSize
-func GetScaleSize() *C.Coordinates {
-	return toCoordinates(robotgo.GetScaleSize())
+func GetScaleSize() *C.Point {
+	return toPoint(robotgo.GetScaleSize())
 }
 
 //export CaptureScreen
@@ -182,8 +192,8 @@ func MoveSmooth(x, y int, low, high float64) bool {
 }
 
 //export GetMousePos
-func GetMousePos() *C.Coordinates {
-	return toCoordinates(robotgo.GetMousePos())
+func GetMousePos() *C.Point {
+	return toPoint(robotgo.GetMousePos())
 }
 
 //export Click
@@ -214,7 +224,11 @@ func Scroll(x, y int) {
 //export KeyTap
 func KeyTap(key *C.char, vals *C.char) *C.char {
 	arr := strings.Split(str(vals), ",")
-	err := robotgo.KeyTap(str(key), arr)
+	args := make([]interface{}, len(arr))
+	for i, s := range arr {
+		args[i] = s
+	}
+	err := robotgo.KeyTap(str(key), args...)
 	if err != nil {
 		return ch(err.Error())
 	}
@@ -223,13 +237,13 @@ func KeyTap(key *C.char, vals *C.char) *C.char {
 }
 
 //export KeyToggle
-func KeyToggle(key *C.char, args *C.char) *C.char {
-	arr := strings.Split(str(args), ",")
-	names := make([]interface{}, len(arr))
+func KeyToggle(key *C.char, vals *C.char) *C.char {
+	arr := strings.Split(str(vals), ",")
+	args := make([]interface{}, len(arr))
 	for i, s := range arr {
-		names[i] = s
+		args[i] = s
 	}
-	err := robotgo.KeyToggle(str(key), names...)
+	err := robotgo.KeyToggle(str(key), args...)
 	if err != nil {
 		return ch(err.Error())
 	}
@@ -238,8 +252,8 @@ func KeyToggle(key *C.char, args *C.char) *C.char {
 }
 
 //export TypeStr
-func TypeStr(c *C.char, args int) {
-	robotgo.TypeStr(str(c), args)
+func TypeStr(c *C.char) {
+	robotgo.TypeStr(str(c))
 }
 
 //export TypeStrDelay
@@ -248,13 +262,8 @@ func TypeStrDelay(c *C.char, delay int) {
 }
 
 //export ReadAll
-func ReadAll() (*C.char, *C.char) {
-	s, err := robotgo.ReadAll()
-	if err != nil {
-		return ch(s), ech(err)
-	}
-
-	return ch(s), ch("")
+func ReadAll() *C.ResultAndError {
+	return toResultAndError(robotgo.ReadAll())
 }
 
 func errStr(err error) *C.char {
