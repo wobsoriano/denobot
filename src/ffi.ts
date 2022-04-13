@@ -92,12 +92,12 @@ export const library = await plug.prepare(options, {
   type_str: {
     name: "TypeStr",
     parameters: ["pointer"],
-    result: "pointer"
+    result: "void"
   },
   type_str_delay: {
     name: "TypeStrDelay",
     parameters: ["pointer", "i64"],
-    result: "pointer"
+    result: "void"
   },
   read_all: {
     name: "ReadAll",

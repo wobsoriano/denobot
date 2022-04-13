@@ -1,10 +1,15 @@
 import { byteType } from "../deps.ts";
 import { library } from "./ffi.ts";
 
-const Coordinates = new byteType.Struct({
-  x: byteType.i32le,
-  y: byteType.i32le
+const Point = new byteType.Struct({
+  x: byteType.i32,
+  y: byteType.i32
 });
+
+const ResultAndError = new byteType.Struct({
+  result: new byteType.FixedString(64),
+  error: new byteType.FixedString(64),
+})
 
 export function freePointer(ptr: Deno.UnsafePointer) {
   library.symbols.free_string(ptr)
@@ -15,13 +20,15 @@ export function stringToPointer(cstr: string): Deno.UnsafePointer {
   return Deno.UnsafePointer.of(buffer);
 }
 
-export function toCString(ptr: Deno.UnsafePointer): string {
+export function toCString(ptr: Deno.UnsafePointer, freePtr = true): string {
   if (ptr.value === 0n) {
     return "";
   }
   const unsafe = new Deno.UnsafePointerView(ptr);
   const str = unsafe.getCString();
-  freePointer(ptr);
+  if (freePtr) {
+    freePointer(ptr);
+  }
   return str;
 }
 
@@ -43,24 +50,30 @@ export function getMouseColor() {
   return toCString(library.symbols.get_mouse_color())
 }
 
+/**
+ * Get the screen size.
+ */
 export function getScreenSize() {
   const result = library.symbols.get_screen_size()
   const ptr = new Deno.UnsafePointerView(result)
-  const lengthBe = new Uint8Array(Coordinates.size)
+  const lengthBe = new Uint8Array(Point.size)
   const view = new DataView(lengthBe.buffer)
   ptr.copyInto(lengthBe, 0)
-  const decoded = Coordinates.read(view, 0)
+  const decoded = Point.read(view, 0)
   freePointer(result)
   return decoded
 }
 
+/**
+ * Get the screen scale size.
+ */
 export function getScaleSize() {
   const result = library.symbols.get_scale_size()
   const ptr = new Deno.UnsafePointerView(result)
-  const lengthBe = new Uint8Array(Coordinates.size)
+  const lengthBe = new Uint8Array(Point.size)
   const view = new DataView(lengthBe.buffer)
   ptr.copyInto(lengthBe, 0)
-  const decoded = Coordinates.read(view, 0)
+  const decoded = Point.read(view, 0)
   freePointer(result)
   return decoded
 }
@@ -79,7 +92,6 @@ export function move(x: number, y: number) {
  */
 export function dragSmooth(x: number, y: number, btn = "left") {
   const ptr = stringToPointer(btn)
-  freePointer(ptr)
   library.symbols.drag_smooth(x, y, ptr)
 }
 
@@ -91,15 +103,15 @@ export function dragSmooth(x: number, y: number, btn = "left") {
 }
 
 /**
- * Gets the mouse coordinates.
+ * Gets the mouse Point.
  */
 export function getMousePos() {
   const result = library.symbols.get_mouse_pos()
   const ptr = new Deno.UnsafePointerView(result)
-  const lengthBe = new Uint8Array(Coordinates.size)
+  const lengthBe = new Uint8Array(Point.size)
   const view = new DataView(lengthBe.buffer)
   ptr.copyInto(lengthBe, 0)
-  const decoded = Coordinates.read(view, 0)
+  const decoded = Point.read(view, 0)
   freePointer(result)
   return decoded
 }
@@ -109,7 +121,6 @@ export function getMousePos() {
  */
 export function click(btn = 'left', double = false) {
   const ptr = stringToPointer(btn)
-  freePointer(ptr)
   library.symbols.click(ptr, Number(double))
 }
 
@@ -119,8 +130,6 @@ export function click(btn = 'left', double = false) {
 export function toggle(key = "left", btn = 'down') {
   const keyPtr = stringToPointer(key)
   const btnPtr = stringToPointer(btn)
-  freePointer(keyPtr)
-  freePointer(btnPtr)
   library.symbols.toggle(keyPtr, btnPtr)
 }
 
@@ -139,8 +148,6 @@ export function scroll(x: number, y: number) {
 export function keyTap(key: string, ...modifiers: string[]) {
   const keyPtr = stringToPointer(key)
   const modifiersPtr = stringToPointer(combineArgs(modifiers))
-  freePointer(keyPtr)
-  freePointer(modifiersPtr)
   library.symbols.key_tap(keyPtr, modifiersPtr)
 }
 
@@ -150,8 +157,6 @@ export function keyTap(key: string, ...modifiers: string[]) {
 export function keyToggle(key: string, ...modifiers: string[]) {
   const keyPtr = stringToPointer(key)
   const modifiersPtr = stringToPointer(combineArgs(modifiers))
-  freePointer(keyPtr)
-  freePointer(modifiersPtr)
   library.symbols.key_toggle(keyPtr, modifiersPtr)
 }
 
@@ -160,7 +165,6 @@ export function keyToggle(key: string, ...modifiers: string[]) {
  */
 export function typeStr(text: string) {
   const textPtr = stringToPointer(text)
-  freePointer(textPtr)
   library.symbols.type_str(textPtr)
 }
 
@@ -169,6 +173,23 @@ export function typeStr(text: string) {
  */
 export function typeStrDelayed(text: string, delay: number) {
   const textPtr = stringToPointer(text)
-  freePointer(textPtr)
   library.symbols.type_str_delay(textPtr, delay)
 }
+
+
+/**
+ * Type a string delayed.
+ */
+ export function readAll() {
+  const result = library.symbols.read_all()
+  const ptr = new Deno.UnsafePointerView(result)
+  const lengthBe = new Uint8Array(ResultAndError.size)
+  const view = new DataView(lengthBe.buffer)
+  ptr.copyInto(lengthBe, 0)
+  const decoded = ResultAndError.read(view, 0)
+  console.log(decoded)
+  freePointer(result)
+  // return decoded
+}
+
+console.log(getScreenSize())
