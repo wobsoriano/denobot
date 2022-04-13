@@ -1,5 +1,6 @@
 {
   "tasks": {
-    "build": "deno run --allow-run build.ts"
+    "build": "rm -rf .cache && deno run --allow-run build.ts",
+    "start": "deno run --allow-ffi --allow-read --allow-write --unstable src/index.ts"
   }
 }

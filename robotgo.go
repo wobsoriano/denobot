@@ -28,11 +28,19 @@ C-shared:
 
 package main
 
+/*
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct { int x; int y; } Coordinates;
+typedef struct { int x; int y; } CaptureScreenReturn;
+*/
 import "C"
 
 import (
 	"fmt"
 	"strings"
+	"unsafe"
 
 	"github.com/go-vgo/robotgo"
 )
@@ -55,6 +63,11 @@ func ech(err error) *C.char {
 
 func toStr(arr interface{}) string {
 	return strings.Trim(fmt.Sprint(arr), "[]")
+}
+
+//export FreeString
+func FreeString(str *C.char) {
+	C.free(unsafe.Pointer(str))
 }
 
 //export GetVersion
@@ -100,13 +113,29 @@ func GetMouseColor() *C.char {
 }
 
 //export GetScreenSize
-func GetScreenSize() (int, int) {
-	return robotgo.GetScreenSize()
+func GetScreenSize() *C.Coordinates {
+	x, y := robotgo.GetScreenSize()
+
+	// malloc a new Point struct and set contents
+	points := (*C.Coordinates)(C.malloc(C.size_t(unsafe.Sizeof(C.Coordinates{}))))
+
+	points.x = (C.int)(x)
+	points.y = (C.int)(y)
+
+	return points
 }
 
 //export GetScaleSize
-func GetScaleSize() (int, int) {
-	return robotgo.GetScaleSize()
+func GetScaleSize() *C.Coordinates {
+	x, y := robotgo.GetScaleSize()
+
+	// malloc a new Point struct and set contents
+	points := (*C.Coordinates)(C.malloc(C.size_t(unsafe.Sizeof(C.Coordinates{}))))
+
+	points.x = (C.int)(x)
+	points.y = (C.int)(y)
+
+	return points
 }
 
 //export CaptureScreen
@@ -143,14 +172,14 @@ func SaveCapture(path *C.char, x, y, w, h int) {
 
 */
 
-//export MoveMouse
-func MoveMouse(x, y int) {
+//export Move
+func Move(x, y int) {
 	robotgo.Move(x, y)
 }
 
-//export DragMouse
-func DragMouse(x, y int, args *C.char) {
-	robotgo.Drag(x, y, str(args))
+//export DragSmooth
+func DragSmooth(x, y int, args *C.char) {
+	robotgo.DragSmooth(x, y, str(args))
 }
 
 //export MoveSmooth
@@ -159,8 +188,16 @@ func MoveSmooth(x, y int, low, high float64) bool {
 }
 
 //export GetMousePos
-func GetMousePos() (int, int) {
-	return robotgo.GetMousePos()
+func GetMousePos() *C.Coordinates {
+	x, y := robotgo.GetMousePos()
+
+	// malloc a new Point struct and set contents
+	points := (*C.Coordinates)(C.malloc(C.size_t(unsafe.Sizeof(C.Coordinates{}))))
+
+	points.x = (C.int)(x)
+	points.y = (C.int)(y)
+
+	return points
 }
 
 //export Click
@@ -168,9 +205,9 @@ func Click(btn *C.char, doublec bool) {
 	robotgo.Click(str(btn), doublec)
 }
 
-//export MouseToggle
-func MouseToggle(key, btn *C.char) {
-	robotgo.MouseToggle(str(key), str(btn))
+//export Toggle
+func Toggle(key, btn *C.char) {
+	robotgo.Toggle(str(key), str(btn))
 }
 
 //export Scroll
@@ -346,7 +383,7 @@ func OpenBitmapStr(path *C.char) *C.char {
 
 //export SaveBitmapStr
 func SaveBitmapStr(bit, path *C.char) *C.char {
-	bitmap := robotgo.BitmapStr(str(bit))
+	bitmap := robotgo.BitmapFromStr(str(bit))
 	err := robotgo.SaveBitmap(bitmap, str(path))
 
 	return ch(err)
@@ -354,7 +391,7 @@ func SaveBitmapStr(bit, path *C.char) *C.char {
 
 //export FindBitmapStr
 func FindBitmapStr(c *C.char) (int, int) {
-	bit := robotgo.BitmapStr(str(c))
+	bit := robotgo.BitmapFromStr(str(c))
 	return robotgo.FindBitmap(bit)
 }
 
@@ -409,7 +446,7 @@ func AddEvents(key, args *C.char) bool {
 
 //export End
 func End() {
-	robotgo.End()
+	robotgo.EventEnd()
 }
 
 //export AddMouse

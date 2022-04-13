@@ -1,43 +1,50 @@
-const OS = Deno.build.os
+const OS = Deno.build.os;
 
 function extension() {
-  if (OS === 'darwin') {
-    return ".dylib"
+  if (OS === "darwin") {
+    return ".dylib";
   }
 
-  if (OS === 'windows') {
-    return ".dll"
+  if (OS === "windows") {
+    return ".dll";
   }
 
-  return ".so"
+  return ".so";
 }
 
 function flags() {
-  if (OS === 'windows') {
-    return ["-ldflags", "-s"]
+  if (OS === "windows") {
+    return ["-ldflags", "-s"];
   }
 
-  return ["-ldflags", "-s -w"]
+  return ["-ldflags", "-s -w"];
 }
 
-const folder = ".cache"
-const name = "robotgo"
+const folder = ".bin";
+const name = "robotgo";
 
-console.log("build c-shared started...")
+console.log("build c-shared started...");
 
 const cmd = Deno.run({
-  cmd: ["go", "build", "-a", ...flags(), "-o", `${folder}/${name}${extension()}`, "-buildmode=c-shared", "robotgo.go"],
-  "stderr": "piped"
-})
+  cmd: [
+    "go",
+    "build",
+    "-a",
+    ...flags(),
+    "-o",
+    `${folder}/${name}${extension()}`,
+    "-buildmode=c-shared",
+    "robotgo.go",
+  ],
+  "stderr": "piped",
+});
 
-const status = await cmd.status()
+const status = await cmd.status();
 
 if (status.success) {
-  console.log("build succeeded")
+  console.log("build succeeded");
 } else {
-  const stderr = await cmd.stderrOutput()
+  const stderr = await cmd.stderrOutput();
   const decoded = new TextDecoder().decode(stderr);
-  console.log(decoded)
+  console.log(decoded);
 }
-
-
