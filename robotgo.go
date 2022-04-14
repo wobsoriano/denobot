@@ -320,8 +320,22 @@ func GetTitle(pid int32) *C.char {
 }
 
 //export GetBounds
-func GetBounds(pid int32) (int, int, int, int) {
-	return robotgo.GetBounds(pid)
+func GetBounds(pid int32) *C.char {
+	x, y, w, h := robotgo.GetBounds(pid)
+
+	data := struct {
+		X int `json:"x"`
+		Y int `json:"y"`
+		W int `json:"w"`
+		H int `json:"h"`
+	}{
+		X: x,
+		Y: y,
+		W: w,
+		H: h,
+	}
+	byte, _ := json.Marshal(data)
+	return ch(string(byte))
 }
 
 //export PidExists

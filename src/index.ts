@@ -3,11 +3,11 @@ import { library } from "./ffi.ts";
 
 const Point = new byteType.Struct({
   x: byteType.i32,
-  y: byteType.i32
+  y: byteType.i32,
 });
 
 export function freePointer(ptr: Deno.UnsafePointer) {
-  library.symbols.free_string(ptr)
+  library.symbols.free_string(ptr);
 }
 
 export function stringToPointer(cstr: string): Deno.UnsafePointer {
@@ -28,49 +28,49 @@ export function toCString(ptr: Deno.UnsafePointer, freePtr = true): string {
 }
 
 function combineArgs(args: string[]) {
-  return args.join(',')
+  return args.join(",");
 }
 
 export function getVersion() {
-  return toCString(library.symbols.get_version())
+  return toCString(library.symbols.get_version());
 }
 
 // Screen
 
 export function getPixelColor() {
-  return toCString(library.symbols.get_pixel_color())
+  return toCString(library.symbols.get_pixel_color());
 }
 
 export function getMouseColor() {
-  return toCString(library.symbols.get_mouse_color())
+  return toCString(library.symbols.get_mouse_color());
 }
 
 /**
  * Get the screen size.
  */
 export function getScreenSize() {
-  const result = library.symbols.get_screen_size()
-  const ptr = new Deno.UnsafePointerView(result)
-  const lengthBe = new Uint8Array(Point.size)
-  const view = new DataView(lengthBe.buffer)
-  ptr.copyInto(lengthBe, 0)
-  const decoded = Point.read(view, 0)
-  freePointer(result)
-  return decoded
+  const result = library.symbols.get_screen_size();
+  const ptr = new Deno.UnsafePointerView(result);
+  const lengthBe = new Uint8Array(Point.size);
+  const view = new DataView(lengthBe.buffer);
+  ptr.copyInto(lengthBe, 0);
+  const decoded = Point.read(view, 0);
+  freePointer(result);
+  return decoded;
 }
 
 /**
  * Get the screen scale size.
  */
 export function getScaleSize() {
-  const result = library.symbols.get_scale_size()
-  const ptr = new Deno.UnsafePointerView(result)
-  const lengthBe = new Uint8Array(Point.size)
-  const view = new DataView(lengthBe.buffer)
-  ptr.copyInto(lengthBe, 0)
-  const decoded = Point.read(view, 0)
-  freePointer(result)
-  return decoded
+  const result = library.symbols.get_scale_size();
+  const ptr = new Deno.UnsafePointerView(result);
+  const lengthBe = new Uint8Array(Point.size);
+  const view = new DataView(lengthBe.buffer);
+  ptr.copyInto(lengthBe, 0);
+  const decoded = Point.read(view, 0);
+  freePointer(result);
+  return decoded;
 }
 
 // MOUSE
@@ -79,60 +79,60 @@ export function getScaleSize() {
  * Move the mouse to (x, y)
  */
 export function move(x: number, y: number) {
-  library.symbols.move(x, y)
+  library.symbols.move(x, y);
 }
 
 /**
  * Drag the mouse like smooth to (x, y)
  */
 export function dragSmooth(x: number, y: number, btn = "left") {
-  const ptr = stringToPointer(btn)
-  library.symbols.drag_smooth(x, y, ptr)
+  const ptr = stringToPointer(btn);
+  library.symbols.drag_smooth(x, y, ptr);
 }
 
 /**
  * Moves mouse to (x, y) human like, with the mouse button up.
  */
- export function moveSmooth(x: number, y: number, low = 1.0, high = 3.0) {
-  library.symbols.move_smooth(x, y, low, high)
+export function moveSmooth(x: number, y: number, low = 1.0, high = 3.0) {
+  library.symbols.move_smooth(x, y, low, high);
 }
 
 /**
  * Gets the mouse Point.
  */
 export function getMousePos() {
-  const result = library.symbols.get_mouse_pos()
-  const ptr = new Deno.UnsafePointerView(result)
-  const lengthBe = new Uint8Array(Point.size)
-  const view = new DataView(lengthBe.buffer)
-  ptr.copyInto(lengthBe, 0)
-  const decoded = Point.read(view, 0)
-  freePointer(result)
-  return decoded
+  const result = library.symbols.get_mouse_pos();
+  const ptr = new Deno.UnsafePointerView(result);
+  const lengthBe = new Uint8Array(Point.size);
+  const view = new DataView(lengthBe.buffer);
+  ptr.copyInto(lengthBe, 0);
+  const decoded = Point.read(view, 0);
+  freePointer(result);
+  return decoded;
 }
 
 /**
  * Click the mouse button.
  */
-export function click(btn = 'left', double = false) {
-  const ptr = stringToPointer(btn)
-  library.symbols.click(ptr, Number(double))
+export function click(btn = "left", double = false) {
+  const ptr = stringToPointer(btn);
+  library.symbols.click(ptr, Number(double));
 }
 
 /**
  * Toggles mouse button.
  */
-export function toggle(key = "left", btn = 'down') {
-  const keyPtr = stringToPointer(key)
-  const btnPtr = stringToPointer(btn)
-  library.symbols.toggle(keyPtr, btnPtr)
+export function toggle(key = "left", btn = "down") {
+  const keyPtr = stringToPointer(key);
+  const btnPtr = stringToPointer(btn);
+  library.symbols.toggle(keyPtr, btnPtr);
 }
 
 /**
  * Scrolls the mouse in any direction.
  */
 export function scroll(x: number, y: number) {
-  library.symbols.scroll(x, y)
+  library.symbols.scroll(x, y);
 }
 
 // KEYBOARD
@@ -141,58 +141,58 @@ export function scroll(x: number, y: number) {
  * Tap the keyboard code.
  */
 export function keyTap(key: string, ...modifiers: string[]) {
-  const keyPtr = stringToPointer(key)
-  const modifiersPtr = stringToPointer(combineArgs(modifiers))
-  library.symbols.key_tap(keyPtr, modifiersPtr)
+  const keyPtr = stringToPointer(key);
+  const modifiersPtr = stringToPointer(combineArgs(modifiers));
+  library.symbols.key_tap(keyPtr, modifiersPtr);
 }
 
 /**
  * Toggle the keyboard.
  */
 export function keyToggle(key: string, ...modifiers: string[]) {
-  const keyPtr = stringToPointer(key)
-  const modifiersPtr = stringToPointer(combineArgs(modifiers))
-  library.symbols.key_toggle(keyPtr, modifiersPtr)
+  const keyPtr = stringToPointer(key);
+  const modifiersPtr = stringToPointer(combineArgs(modifiers));
+  library.symbols.key_toggle(keyPtr, modifiersPtr);
 }
 
 /**
  * Type a string.
  */
 export function typeStr(text: string) {
-  const textPtr = stringToPointer(text)
-  library.symbols.type_str(textPtr)
+  const textPtr = stringToPointer(text);
+  library.symbols.type_str(textPtr);
 }
 
 /**
  * Type a string delayed.
  */
 export function typeStrDelayed(text: string, delay: number) {
-  const textPtr = stringToPointer(text)
-  library.symbols.type_str_delay(textPtr, delay)
+  const textPtr = stringToPointer(text);
+  library.symbols.type_str_delay(textPtr, delay);
 }
 
 /**
  * Type a string delayed.
  */
- export function readAll(): string {
-  const ptr = library.symbols.read_all()
-  const str = toCString(ptr)
-  const data = JSON.parse(str) as { result: string; error: string }
+export function readAll(): string {
+  const ptr = library.symbols.read_all();
+  const str = toCString(ptr);
+  const data = JSON.parse(str) as { result: string; error: string };
   if (data.error) {
-    throw new Error(data.error)
+    throw new Error(data.error);
   }
-  return data.result
+  return data.result;
 }
 
 /**
  * Write string to clipboard.
  */
 export function writeAll(text: string) {
-  const ptr = stringToPointer(text)
-  const errPtr = library.symbols.write_all(ptr)
-  const errPtrStr = toCString(errPtr)
+  const ptr = stringToPointer(text);
+  const errPtr = library.symbols.write_all(ptr);
+  const errPtrStr = toCString(errPtr);
   if (errPtrStr.length > 0) {
-    throw new Error(errPtrStr)
+    throw new Error(errPtrStr);
   }
 }
 
@@ -200,8 +200,8 @@ export function writeAll(text: string) {
  * Paste a string, support UTF-8, write the string to clipboard and tap `cmd + v`.
  */
 export function pasteStr(text: string) {
-  const ptr = stringToPointer(text)
-  library.symbols.paste_str(ptr)
+  const ptr = stringToPointer(text);
+  library.symbols.paste_str(ptr);
 }
 
 // WINDOW
@@ -210,16 +210,30 @@ export function pasteStr(text: string) {
  * Show an alert message.
  */
 export function showAlert(title: string, message: string) {
-  const titlePtr = stringToPointer(title)
-  const messagePtr = stringToPointer(message)
-  const ptr = library.symbols.show_alert(titlePtr, messagePtr)
-  return Boolean(ptr)
+  const titlePtr = stringToPointer(title);
+  const messagePtr = stringToPointer(message);
+  const ptr = library.symbols.show_alert(titlePtr, messagePtr);
+  return Boolean(ptr);
 }
 
 /**
  * Get the window title.
  */
 export function getTitle(pid = -1) {
-  const ptr = library.symbols.get_title(pid)
-  return toCString(ptr)
+  const ptr = library.symbols.get_title(pid);
+  return toCString(ptr);
+}
+
+/**
+ * Get the window bounds.
+ */
+export function getBounds(pid: number) {
+  const ptr = library.symbols.get_bounds(pid);
+  const result = toCString(ptr);
+  return JSON.parse(result) as {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  };
 }

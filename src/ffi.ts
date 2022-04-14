@@ -61,12 +61,12 @@ export const library = await plug.prepare(options, {
   get_mouse_pos: {
     name: "GetMousePos",
     parameters: [],
-    result: "pointer"
+    result: "pointer",
   },
   click: {
     name: "GetMousePos",
     parameters: ["pointer", "u8"],
-    result: "void"
+    result: "void",
   },
   toggle: {
     name: "Toggle",
@@ -82,47 +82,52 @@ export const library = await plug.prepare(options, {
   key_tap: {
     name: "KeyTap",
     parameters: ["pointer", "pointer"],
-    result: "pointer"
+    result: "pointer",
   },
   key_toggle: {
     name: "KeyToggle",
     parameters: ["pointer", "pointer"],
-    result: "pointer"
+    result: "pointer",
   },
   type_str: {
     name: "TypeStr",
     parameters: ["pointer"],
-    result: "void"
+    result: "void",
   },
   type_str_delay: {
     name: "TypeStrDelay",
     parameters: ["pointer", "i64"],
-    result: "void"
+    result: "void",
   },
   read_all: {
     name: "ReadAll",
     parameters: [],
-    result: "pointer"
+    result: "pointer",
   },
   write_all: {
     name: "WriteAll",
     parameters: ["pointer"],
-    result: "pointer"
+    result: "pointer",
   },
   paste_str: {
     name: "PasteStr",
     parameters: ["pointer"],
-    result: "void"
+    result: "void",
   },
   // window
   show_alert: {
     name: "ShowAlert",
     parameters: ["pointer", "pointer"],
-    result: "usize"
+    result: "usize",
   },
   get_title: {
     name: "GetTitle",
     parameters: ["i32"],
-    result: "pointer"
-  }
+    result: "pointer",
+  },
+  get_bounds: {
+    name: "GetBounds",
+    parameters: ["i32"],
+    result: "pointer",
+  },
 });
