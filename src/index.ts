@@ -203,3 +203,23 @@ export function pasteStr(text: string) {
   const ptr = stringToPointer(text)
   library.symbols.paste_str(ptr)
 }
+
+// WINDOW
+
+/**
+ * Show an alert message.
+ */
+export function showAlert(title: string, message: string) {
+  const titlePtr = stringToPointer(title)
+  const messagePtr = stringToPointer(message)
+  const ptr = library.symbols.show_alert(titlePtr, messagePtr)
+  return Boolean(ptr)
+}
+
+/**
+ * Get the window title.
+ */
+export function getTitle(pid = -1) {
+  const ptr = library.symbols.get_title(pid)
+  return toCString(ptr)
+}

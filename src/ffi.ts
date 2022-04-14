@@ -113,5 +113,16 @@ export const library = await plug.prepare(options, {
     name: "PasteStr",
     parameters: ["pointer"],
     result: "void"
+  },
+  // window
+  show_alert: {
+    name: "ShowAlert",
+    parameters: ["pointer", "pointer"],
+    result: "usize"
+  },
+  get_title: {
+    name: "GetTitle",
+    parameters: ["i32"],
+    result: "pointer"
   }
 });
