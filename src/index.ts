@@ -237,3 +237,15 @@ export function getBounds(pid: number) {
     h: number;
   };
 }
+
+/**
+ * Determine whether the process exists.
+ */
+ export function pidExists(pid: number) {
+  const ptr = library.symbols.pid_exists(pid);
+  const result = toCString(ptr);
+  return JSON.parse(result) as {
+    exists: boolean
+    error: string
+  };
+}

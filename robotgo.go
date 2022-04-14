@@ -339,13 +339,17 @@ func GetBounds(pid int32) *C.char {
 }
 
 //export PidExists
-func PidExists(pid int32) (bool, *C.char) {
+func PidExists(pid int32) *C.char {
 	b, err := robotgo.PidExists(pid)
-	if err != nil {
-		return b, ech(err)
+	data := struct {
+		Exists bool   `json:"exists"`
+		Error  string `json:"error"`
+	}{
+		Exists: b,
+		Error:  sf(err),
 	}
-
-	return b, ch("")
+	byte, _ := json.Marshal(data)
+	return ch(string(byte))
 }
 
 //export FindIds

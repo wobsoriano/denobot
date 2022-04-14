@@ -130,4 +130,9 @@ export const library = await plug.prepare(options, {
     parameters: ["i32"],
     result: "pointer",
   },
+  pid_exists: {
+    name: "PidExists",
+    parameters: ["i32"],
+    result: "pointer",
+  },
 });
