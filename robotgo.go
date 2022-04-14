@@ -33,7 +33,6 @@ package main
 #include <string.h>
 
 typedef struct { int x; int y; } Point;
-typedef struct { char* result; char* error; } ResultAndError;
 */
 import "C"
 
@@ -78,15 +77,6 @@ func toPoint(x, y int) *C.Point {
 	coords.y = (C.int)(y)
 
 	return coords
-}
-
-func toResultAndError(result string, err error) *C.ResultAndError {
-	// malloc a new struct and set contents
-	obj := (*C.ResultAndError)(C.malloc(C.size_t(unsafe.Sizeof(C.ResultAndError{}))))
-
-	obj.result = ch(result)
-	obj.error = ech(err)
-	return obj
 }
 
 //export FreeString

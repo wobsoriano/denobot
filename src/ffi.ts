@@ -103,5 +103,15 @@ export const library = await plug.prepare(options, {
     name: "ReadAll",
     parameters: [],
     result: "pointer"
+  },
+  write_all: {
+    name: "WriteAll",
+    parameters: ["pointer"],
+    result: "pointer"
+  },
+  paste_str: {
+    name: "PasteStr",
+    parameters: ["pointer"],
+    result: "void"
   }
 });

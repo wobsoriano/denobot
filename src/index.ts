@@ -184,4 +184,22 @@ export function typeStrDelayed(text: string, delay: number) {
   return data.result
 }
 
-readAll()
+/**
+ * Write string to clipboard.
+ */
+export function writeAll(text: string) {
+  const ptr = stringToPointer(text)
+  const errPtr = library.symbols.write_all(ptr)
+  const errPtrStr = toCString(errPtr)
+  if (errPtrStr.length > 0) {
+    throw new Error(errPtrStr)
+  }
+}
+
+/**
+ * Paste a string, support UTF-8, write the string to clipboard and tap `cmd + v`.
+ */
+export function pasteStr(text: string) {
+  const ptr = stringToPointer(text)
+  library.symbols.paste_str(ptr)
+}
