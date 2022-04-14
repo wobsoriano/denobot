@@ -6,11 +6,6 @@ const Point = new byteType.Struct({
   y: byteType.i32
 });
 
-const ResultAndError = new byteType.Struct({
-  result: new byteType.FixedString(64),
-  error: new byteType.FixedString(64),
-})
-
 export function freePointer(ptr: Deno.UnsafePointer) {
   library.symbols.free_string(ptr)
 }
@@ -176,20 +171,17 @@ export function typeStrDelayed(text: string, delay: number) {
   library.symbols.type_str_delay(textPtr, delay)
 }
 
-
 /**
  * Type a string delayed.
  */
- export function readAll() {
-  const result = library.symbols.read_all()
-  const ptr = new Deno.UnsafePointerView(result)
-  const lengthBe = new Uint8Array(ResultAndError.size)
-  const view = new DataView(lengthBe.buffer)
-  ptr.copyInto(lengthBe, 0)
-  const decoded = ResultAndError.read(view, 0)
-  console.log(decoded)
-  freePointer(result)
-  // return decoded
+ export function readAll(): string {
+  const ptr = library.symbols.read_all()
+  const str = toCString(ptr)
+  const data = JSON.parse(str) as { result: string; error: string }
+  if (data.error) {
+    throw new Error(data.error)
+  }
+  return data.result
 }
 
-console.log(getScreenSize())
+readAll()

@@ -34,11 +34,11 @@ package main
 
 typedef struct { int x; int y; } Point;
 typedef struct { char* result; char* error; } ResultAndError;
-typedef struct { int x; int y; } CaptureScreenReturn;
 */
 import "C"
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"unsafe"
@@ -55,6 +55,10 @@ func str(ch *C.char) string {
 }
 
 func sf(err error) string {
+	if err == nil {
+		return ""
+	}
+
 	return fmt.Sprintf("%s", err)
 }
 
@@ -87,6 +91,7 @@ func toResultAndError(result string, err error) *C.ResultAndError {
 
 //export FreeString
 func FreeString(str *C.char) {
+	fmt.Printf("freeing %v...", str)
 	C.free(unsafe.Pointer(str))
 }
 
@@ -262,8 +267,18 @@ func TypeStrDelay(c *C.char, delay int) {
 }
 
 //export ReadAll
-func ReadAll() *C.ResultAndError {
-	return toResultAndError(robotgo.ReadAll())
+func ReadAll() *C.char {
+	result, err := robotgo.ReadAll()
+
+	data := struct {
+		Result string `json:"result"`
+		Error  string `json:"error"`
+	}{
+		Result: result,
+		Error:  sf(err),
+	}
+	byte, _ := json.Marshal(data)
+	return ch(string(byte))
 }
 
 func errStr(err error) *C.char {
