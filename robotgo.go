@@ -33,11 +33,12 @@ package main
 #include <string.h>
 
 typedef struct { int x; int y; } Point;
+typedef struct { char* result; char* error; } ResultAndError;
+typedef struct { int x; int y; int w; int h; } GetBoundsReturn;
 */
 import "C"
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"unsafe"
@@ -79,9 +80,19 @@ func toPoint(x, y int) *C.Point {
 	return coords
 }
 
+func toResultAndError(result string, err error) *C.ResultAndError {
+	// malloc a new struct and set contents
+	data := (*C.ResultAndError)(C.malloc(C.size_t(unsafe.Sizeof(C.ResultAndError{}))))
+
+	data.result = ch(result)
+	data.error = ech(err)
+
+	return data
+}
+
 //export FreeString
 func FreeString(str *C.char) {
-	fmt.Printf("freeing %v...", str)
+	fmt.Printf("freeing %v... \n", str)
 	C.free(unsafe.Pointer(str))
 }
 
@@ -257,18 +268,8 @@ func TypeStrDelay(c *C.char, delay int) {
 }
 
 //export ReadAll
-func ReadAll() *C.char {
-	result, err := robotgo.ReadAll()
-
-	data := struct {
-		Result string `json:"result"`
-		Error  string `json:"error"`
-	}{
-		Result: result,
-		Error:  sf(err),
-	}
-	byte, _ := json.Marshal(data)
-	return ch(string(byte))
+func ReadAll() *C.ResultAndError {
+	return toResultAndError(robotgo.ReadAll())
 }
 
 func errStr(err error) *C.char {
@@ -320,82 +321,47 @@ func GetTitle(pid int32) *C.char {
 }
 
 //export GetBounds
-func GetBounds(pid int32) *C.char {
+func GetBounds(pid int32) *C.GetBoundsReturn {
 	x, y, w, h := robotgo.GetBounds(pid)
 
-	data := struct {
-		X int `json:"x"`
-		Y int `json:"y"`
-		W int `json:"w"`
-		H int `json:"h"`
-	}{
-		X: x,
-		Y: y,
-		W: w,
-		H: h,
-	}
-	byte, _ := json.Marshal(data)
-	return ch(string(byte))
+	data := (*C.GetBoundsReturn)(C.malloc(C.size_t(unsafe.Sizeof(C.GetBoundsReturn{}))))
+	data.x = (C.int)(x)
+	data.y = (C.int)(y)
+	data.w = (C.int)(w)
+	data.h = (C.int)(h)
+
+	return data
 }
 
 //export PidExists
-func PidExists(pid int32) *C.char {
+func PidExists(pid int32) *C.ResultAndError {
 	b, err := robotgo.PidExists(pid)
-	data := struct {
-		Exists bool   `json:"exists"`
-		Error  string `json:"error"`
-	}{
-		Exists: b,
-		Error:  sf(err),
+	if b {
+		return toResultAndError("true", err)
 	}
-	byte, _ := json.Marshal(data)
-	return ch(string(byte))
+	return toResultAndError("false", err)
 }
 
 //export FindIds
-func FindIds(name *C.char) (*C.char, *C.char) {
+func FindIds(name *C.char) *C.ResultAndError {
 	arr, err := robotgo.FindIds(str(name))
-	sb := toStr(arr)
-
-	if err != nil {
-		return ch(sb), ech(err)
-	}
-
-	return ch(sb), ch("")
+	return toResultAndError(toStr(arr), err)
 }
 
 //export FindName
-func FindName(pid int32) (*C.char, *C.char) {
-	sb, err := robotgo.FindName(pid)
-
-	if err != nil {
-		return ch(sb), ech(err)
-	}
-
-	return ch(sb), ch("")
+func FindName(pid int32) *C.ResultAndError {
+	return toResultAndError(robotgo.FindName(pid))
 }
 
 //export FindNames
-func FindNames() (*C.char, *C.char) {
+func FindNames() *C.ResultAndError {
 	arr, err := robotgo.FindNames()
-	sb := toStr(arr)
-
-	if err != nil {
-		return ch(sb), ech(err)
-	}
-
-	return ch(sb), ch("")
+	return toResultAndError(toStr(arr), err)
 }
 
 //export FindPath
-func FindPath(pid int32) (*C.char, *C.char) {
-	sb, err := robotgo.FindPath(pid)
-
-	if err != nil {
-		return ch(sb), ech(err)
-	}
-
-	return ch(sb), ch("")
+func FindPath(pid int32) *C.ResultAndError {
+	return toResultAndError(robotgo.FindPath(pid))
 }
 
 //export ActivePID

@@ -135,4 +135,9 @@ export const library = await plug.prepare(options, {
     parameters: ["i32"],
     result: "pointer",
   },
+  find_ids: {
+    name: "FindIds",
+    parameters: ["pointer"],
+    result: "pointer",
+  },
 });

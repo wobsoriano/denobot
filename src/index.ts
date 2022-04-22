@@ -1,9 +1,19 @@
 import { byteType } from "../deps.ts";
 import { library } from "./ffi.ts";
 
+type ResultAndError = {
+  result: string;
+  error: string;
+};
+
 const Point = new byteType.Struct({
   x: byteType.i32,
   y: byteType.i32,
+});
+
+const ResultAndErrorStruct = new byteType.Struct({
+  result: new byteType.PointerValue(byteType.cstring),
+  error: new byteType.PointerValue(byteType.cstring),
 });
 
 export function freePointer(ptr: Deno.UnsafePointer) {
@@ -19,8 +29,8 @@ export function toCString(ptr: Deno.UnsafePointer, freePtr = true): string {
   if (ptr.value === 0n) {
     return "";
   }
-  const unsafe = new Deno.UnsafePointerView(ptr);
-  const str = unsafe.getCString();
+  const ptrView = new Deno.UnsafePointerView(ptr);
+  const str = ptrView.getCString();
   if (freePtr) {
     freePointer(ptr);
   }
@@ -50,11 +60,8 @@ export function getMouseColor() {
  */
 export function getScreenSize() {
   const result = library.symbols.get_screen_size();
-  const ptr = new Deno.UnsafePointerView(result);
-  const lengthBe = new Uint8Array(Point.size);
-  const view = new DataView(lengthBe.buffer);
-  ptr.copyInto(lengthBe, 0);
-  const decoded = Point.read(view, 0);
+  const ptrView = new Deno.UnsafePointerView(result);
+  const decoded = Point.read(ptrView, 0);
   freePointer(result);
   return decoded;
 }
@@ -64,11 +71,8 @@ export function getScreenSize() {
  */
 export function getScaleSize() {
   const result = library.symbols.get_scale_size();
-  const ptr = new Deno.UnsafePointerView(result);
-  const lengthBe = new Uint8Array(Point.size);
-  const view = new DataView(lengthBe.buffer);
-  ptr.copyInto(lengthBe, 0);
-  const decoded = Point.read(view, 0);
+  const ptrView = new Deno.UnsafePointerView(result);
+  const decoded = Point.read(ptrView, 0);
   freePointer(result);
   return decoded;
 }
@@ -102,11 +106,8 @@ export function moveSmooth(x: number, y: number, low = 1.0, high = 3.0) {
  */
 export function getMousePos() {
   const result = library.symbols.get_mouse_pos();
-  const ptr = new Deno.UnsafePointerView(result);
-  const lengthBe = new Uint8Array(Point.size);
-  const view = new DataView(lengthBe.buffer);
-  ptr.copyInto(lengthBe, 0);
-  const decoded = Point.read(view, 0);
+  const ptrView = new Deno.UnsafePointerView(result);
+  const decoded = Point.read(ptrView, 0);
   freePointer(result);
   return decoded;
 }
@@ -172,16 +173,19 @@ export function typeStrDelayed(text: string, delay: number) {
 }
 
 /**
- * Type a string delayed.
+ * TODO: definition
  */
 export function readAll(): string {
   const ptr = library.symbols.read_all();
-  const str = toCString(ptr);
-  const data = JSON.parse(str) as { result: string; error: string };
-  if (data.error) {
-    throw new Error(data.error);
+  const unsafe = new Deno.UnsafePointerView(ptr);
+  const { result, error } = ResultAndErrorStruct.read(unsafe) as ResultAndError;
+  freePointer(ptr);
+
+  if (error) {
+    throw new Error(error);
   }
-  return data.result;
+
+  return result;
 }
 
 /**
@@ -228,24 +232,49 @@ export function getTitle(pid = -1) {
  * Get the window bounds.
  */
 export function getBounds(pid: number) {
+  const struct = new byteType.Struct({
+    x: byteType.i32,
+    y: byteType.i32,
+    w: byteType.i32,
+    h: byteType.i32
+  });
+  
   const ptr = library.symbols.get_bounds(pid);
-  const result = toCString(ptr);
-  return JSON.parse(result) as {
-    x: number;
-    y: number;
-    w: number;
-    h: number;
-  };
+  const ptrView = new Deno.UnsafePointerView(ptr);
+  const decoded = struct.read(ptrView, 0);
+  freePointer(ptr);
+  return decoded;
 }
 
 /**
  * Determine whether the process exists.
  */
- export function pidExists(pid: number) {
+export function pidExists(pid: number) {
   const ptr = library.symbols.pid_exists(pid);
-  const result = toCString(ptr);
-  return JSON.parse(result) as {
-    exists: boolean
-    error: string
-  };
+  const unsafe = new Deno.UnsafePointerView(ptr);
+  const { result, error } = ResultAndErrorStruct.read(unsafe) as ResultAndError;
+  freePointer(ptr);
+
+  if (error) {
+    throw new Error(error);
+  }
+
+  return result === "true";
+}
+
+/**
+ * Finds all processes named with a subset of "name" (case insensitive).
+ */
+export function findIds(name: string) {
+  const namePtr = stringToPointer(name);
+  const ptr = library.symbols.find_ids(namePtr);
+  const unsafe = new Deno.UnsafePointerView(ptr);
+  const { result, error } = ResultAndErrorStruct.read(unsafe) as ResultAndError;
+  freePointer(ptr);
+
+  if (error) {
+    throw new Error(error);
+  }
+
+  return result.split(" ");
 }
