@@ -236,7 +236,7 @@ func KeyTap(key *C.char, vals *C.char) *C.char {
 	}
 	err := robotgo.KeyTap(str(key), args...)
 	if err != nil {
-		return ch(err.Error())
+		return ech(err)
 	}
 
 	return ch("")
@@ -251,7 +251,7 @@ func KeyToggle(key *C.char, vals *C.char) *C.char {
 	}
 	err := robotgo.KeyToggle(str(key), args...)
 	if err != nil {
-		return ch(err.Error())
+		return ech(err)
 	}
 
 	return ch("")

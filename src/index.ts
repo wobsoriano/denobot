@@ -144,7 +144,11 @@ export function scroll(x: number, y: number) {
 export function keyTap(key: string, ...modifiers: string[]) {
   const keyPtr = stringToPointer(key);
   const modifiersPtr = stringToPointer(combineArgs(modifiers));
-  library.symbols.key_tap(keyPtr, modifiersPtr);
+  const resultPtr = library.symbols.key_tap(keyPtr, modifiersPtr);
+  const error = toCString(resultPtr);
+  if (error !== "") {
+    throw new Error(error);
+  }
 }
 
 /**
@@ -153,7 +157,11 @@ export function keyTap(key: string, ...modifiers: string[]) {
 export function keyToggle(key: string, ...modifiers: string[]) {
   const keyPtr = stringToPointer(key);
   const modifiersPtr = stringToPointer(combineArgs(modifiers));
-  library.symbols.key_toggle(keyPtr, modifiersPtr);
+  const resultPtr = library.symbols.key_toggle(keyPtr, modifiersPtr);
+  const error = toCString(resultPtr);
+  if (error !== "") {
+    throw new Error(error);
+  }
 }
 
 /**
